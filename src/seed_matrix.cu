@@ -85,7 +85,7 @@ bool quadmap::SeedMatrix::input_raw(cv::Mat raw_mat, const SE3<float> T_curr_wor
   cv::remap(input_image, undistorted_image, remap_1, remap_2, cv::INTER_LINEAR, cv::BORDER_CONSTANT);
   income_undistort = undistorted_image;
   undistorted_image.convertTo(input_float, CV_32F);
-  printf("cuda prepare the image cost %f ms \n", ( std::clock() - start ) / (double) CLOCKS_PER_SEC * 1000);
+  // printf("cuda prepare the image cost %f ms \n", ( std::clock() - start ) / (double) CLOCKS_PER_SEC * 1000);
   return add_frames(input_float, T_curr_world);
 }
 void quadmap::SeedMatrix::add_income_image(const cv::Mat &input_image, const SE3<float> T_world)
@@ -116,7 +116,7 @@ bool quadmap::SeedMatrix::add_frames(
   
   //add to the list
   add_income_image(input_image, T_curr_world);
-  printf("till add image cost %f ms \n", ( std::clock() - start ) / (double) CLOCKS_PER_SEC * 1000); start = std::clock();
+  // printf("till add image cost %f ms \n", ( std::clock() - start ) / (double) CLOCKS_PER_SEC * 1000); start = std::clock();
 
   //for semi-dense update and project
   if(!initialized)
@@ -139,7 +139,7 @@ bool quadmap::SeedMatrix::add_frames(
     create_new_keyframe();
     set_income_as_keyframe();
   }
-  printf("till all semidense cost %f ms \n", ( std::clock() - start ) / (double) CLOCKS_PER_SEC * 1000); start = std::clock();
+  // printf("till all semidense cost %f ms \n", ( std::clock() - start ) / (double) CLOCKS_PER_SEC * 1000); start = std::clock();
 
   if(frame_index % semi2dense_ratio != 0)
     return false;
@@ -153,12 +153,12 @@ bool quadmap::SeedMatrix::add_frames(
     extract_depth();
     has_depth_output = true;
   }
-  printf("till all full dense cost %f ms \n", ( std::clock() - start ) / (double) CLOCKS_PER_SEC * 1000); start = std::clock();
+  // printf("till all full dense cost %f ms \n", ( std::clock() - start ) / (double) CLOCKS_PER_SEC * 1000); start = std::clock();
 
   //add the current frame into framelist
   if(need_add_reference())
     add_reference();
-  printf("till all end cost %f ms \n", ( std::clock() - start ) / (double) CLOCKS_PER_SEC * 1000); start = std::clock();
+  // printf("till all end cost %f ms \n", ( std::clock() - start ) / (double) CLOCKS_PER_SEC * 1000); start = std::clock();
 
   if(has_depth_output)
   {
@@ -453,7 +453,7 @@ void quadmap::SeedMatrix::extract_depth()
   bindTexture(income_gradient_tex, income_gradient);
 
   //prepare the reference data
-  printf("  we have %d frames.\n", framelist_host.size());
+  // printf("  we have %d frames.\n", framelist_host.size());
   for(int i = 0; i < framelist_host.size(); i++)
   {
     FrameElement this_ele = framelist_host[i];
@@ -479,7 +479,7 @@ void quadmap::SeedMatrix::extract_depth()
   quadtree_image_kernal<<<quadtree_grid, quadtree_block>>>(quadtree_index.dev_ptr);
   cudaDeviceSynchronize();
 
-  printf("  quadtree cost %f ms \n", ( std::clock() - depth_extract_start ) / (double) CLOCKS_PER_SEC * 1000);depth_extract_start = std::clock();
+  // printf("  quadtree cost %f ms \n", ( std::clock() - depth_extract_start ) / (double) CLOCKS_PER_SEC * 1000);depth_extract_start = std::clock();
 
   bindTexture(quadtree_tex, quadtree_index, cudaFilterModePoint);
 
@@ -523,13 +523,13 @@ void quadmap::SeedMatrix::extract_depth()
   normalize_the_cost<<<normalize_grid,normalize_block>>>(image_cost.dev_ptr, add_num.dev_ptr);
   cudaDeviceSynchronize();
 
-  printf("  cost normalize cost %f ms \n", ( std::clock() - depth_extract_start ) / (double) CLOCKS_PER_SEC * 1000);depth_extract_start = std::clock();
+  // printf("  cost normalize cost %f ms \n", ( std::clock() - depth_extract_start ) / (double) CLOCKS_PER_SEC * 1000);depth_extract_start = std::clock();
 
   // /*bp extract the depth*/
   // debug_image.zero();
   bp_extract(image_cost, debug_image);
   // hbp(image_cost, feature_depth);
-  printf("  bp extract cost %f ms \n", ( std::clock() - depth_extract_start ) / (double) CLOCKS_PER_SEC * 1000);depth_extract_start = std::clock();
+  // printf("  bp extract cost %f ms \n", ( std::clock() - depth_extract_start ) / (double) CLOCKS_PER_SEC * 1000);depth_extract_start = std::clock();
 
   dim3 upsample_block;
   dim3 upsample_grid;
@@ -538,12 +538,12 @@ void quadmap::SeedMatrix::extract_depth()
   upsample_grid.x = (width + upsample_block.x - 1) / upsample_block.x;
   upsample_grid.y = (height + upsample_block.y - 1) / upsample_block.y;
   // upsample_naive<<<upsample_grid, upsample_block>>>(debug_image.dev_ptr, depth_output.dev_ptr);
-  printf("  naive upsample cost %f ms \n", ( std::clock() - depth_extract_start ) / (double) CLOCKS_PER_SEC * 1000);depth_extract_start = std::clock();
+  // printf("  naive upsample cost %f ms \n", ( std::clock() - depth_extract_start ) / (double) CLOCKS_PER_SEC * 1000);depth_extract_start = std::clock();
 
   clock_t upsample_start = std::clock();
   global_upsample(debug_image, depth_output);
   // local_upsample(debug_image, depth_output);
-  printf("  global upsample cost %f ms \n", ( std::clock() - depth_extract_start ) / (double) CLOCKS_PER_SEC * 1000);depth_extract_start = std::clock();
+  // printf("  global upsample cost %f ms \n", ( std::clock() - depth_extract_start ) / (double) CLOCKS_PER_SEC * 1000);depth_extract_start = std::clock();
 
   cudaUnbindTexture(quadtree_tex);
   cudaUnbindTexture(income_image_tex);
@@ -601,7 +601,7 @@ void quadmap::SeedMatrix::download_output()
   std::clock_t start = std::clock();
   depth_output.getDevData(reinterpret_cast<float*>(cv_output.data));
   debug_image.getDevData(reinterpret_cast<float*>(cv_debug.data));
-  printf("download depth map cost %f ms \n", ( std::clock() - start ) / (double) CLOCKS_PER_SEC * 1000);start = std::clock();
+  // printf("download depth map cost %f ms \n", ( std::clock() - start ) / (double) CLOCKS_PER_SEC * 1000);start = std::clock();
 }
 
 void quadmap::SeedMatrix::get_result(cv::Mat &depth, cv::Mat &debug, cv::Mat &reference)

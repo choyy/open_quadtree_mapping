@@ -19,15 +19,6 @@ find_package(OpenCV REQUIRED)
 find_package(Eigen REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system filesystem)
 
-find_package(catkin REQUIRED COMPONENTS
-  roscpp roslib cmake_modules cv_bridge image_transport pcl_ros sensor_msgs geometry_msgs)
-catkin_package(
-    DEPENDS OpenCV Eigen Boost
-    CATKIN_DEPENDS roscpp roslib image_transport pcl_ros
-    INCLUDE_DIRS include
-    # LIBRARIES efficient_map efficient_map_cuda
-)
-
 
 include_directories(
   include
@@ -36,22 +27,11 @@ include_directories(
   ${Boost_INCLUDE_DIRS}
 )
 
-# Set link libraries
-list(APPEND LINK_LIBS
-  ${OpenCV_LIBS}
-  ${Boost_LIBRARIES}
-)
-
-include_directories(${catkin_INCLUDE_DIRS})
-list(APPEND LINK_LIBS ${catkin_LIBRARIES})
-
 cuda_add_executable(open_quadtree_mapping_node
     src/check_cuda_device.cu
     src/seed_matrix.cu
     src/depthmap.cpp
-    src/depthmap_node.cpp
-    src/publisher.cpp
-    src/main_ros.cpp
+    src/main.cpp
     )
 target_link_libraries(open_quadtree_mapping_node
-${catkin_LIBRARIES} ${OpenCV_LIBS} ${Boost_LIBRARIES})
+${OpenCV_LIBS} ${Boost_LIBRARIES})
