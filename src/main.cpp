@@ -3,11 +3,11 @@
 #include <quadmap/depthmap.h>
 #include <quadmap/check_cuda_device.cuh>
 
-void savePoints2File(const std::vector<cv::Point3f>& pc, const std::string& filename)
+void savePoints2File(const std::vector<Eigen::Vector4f>& pc, const std::string& filename)
 {
     std::ofstream outFile(filename); // 打开一个文件流用于写入
     for (const auto& p : pc) {
-        outFile << p.x << " " << p.y << " " << p.z << std::endl;
+        outFile << p[0] << " " << p[1] << " " << p[2] << " " << p[3] << std::endl;
     }
     outFile.close(); // 关闭文件流
     std::cout << "数据写入完成。" << std::endl;
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
     }
 
     bool has_result;
-    std::vector<cv::Point3f> pc;
+    std::vector<Eigen::Vector4f> pc;
     for(int i = 1; i < imgs.size(); i++) {
         has_result = depthmap_->add_frames(imgs[i], Ts[i].inv());
         if(!has_result) continue;
@@ -110,7 +110,8 @@ int main(int argc, char **argv)
                     const float3 f = normalize(make_float3((x - cx) / fx, (y - cy) / fy, 1.0f));
                     const float3 xyz = T_world_ref * (f * depth_value);
 
-                    cv::Point3f p(xyz.x, xyz.y, xyz.z);
+                    const uint8_t intensity = ref_img.at<uint8_t>(y, x);
+                    Eigen::Vector4f p(xyz.x, xyz.y, xyz.z, intensity);
                     pc.push_back(p);
                 }
             }
@@ -144,12 +145,12 @@ int main(int argc, char **argv)
                 const float3 f = normalize(make_float3((x - cx) / fx, (y - cy) / fy, 1.0f));
                 const float3 xyz = T_world_ref * (f * depth_value);
 
-                // const uint8_t intensity = ref_img.at<uint8_t>(y, x);
-                // p.intensity = intensity;
-                cv::Point3f p(xyz.x, xyz.y, xyz.z);
+                const uint8_t intensity = ref_img.at<uint8_t>(y, x);
+                Eigen::Vector4f p(xyz.x, xyz.y, xyz.z, intensity);
                 pc.push_back(p);
             }
         }
+        savePoints2File(pc, "data/points.txt");
 
         //  ///*for debug*/
         // for(int y=0; y<depth.rows; ++y)
