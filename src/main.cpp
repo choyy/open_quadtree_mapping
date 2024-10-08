@@ -61,21 +61,21 @@ int main(int argc, char **argv)
         undist_map1, undist_map2, semi2dense_ratio);
 
     // 打开文件
-    std::string path = "../datasets/TUM/rgbd_dataset_freiburg1_desk/";
-    std::ifstream file("data/pos_and_img_rgbd_dataset_freiburg1_desk.txt");
+    std::string path = "../datasets/TUM/rgbd_dataset_freiburg2_xyz/";
+    std::ifstream file("data/pose_img_rgbd_dataset_freiburg2.txt");
     std::string line;
     std::string imagePath;
-    std::vector<quadmap::SE3<float>> Ts;
+    std::vector<quadmap::SE3<float>> Twcs;
     std::vector<cv::Mat> imgs;
     if (file.is_open()) {
         while (std::getline(file, line)) {
             std::istringstream iss(line);
             double timestamp, x, y, z, qx, qy, qz, qw;
             if (iss >> timestamp >> x >> y >> z >> qx >> qy >> qz >> qw >> imagePath) {
-                quadmap::SE3<float> T_world_curr(qw, qx, qy, qz, x, y, z);
+                quadmap::SE3<float> Twc(qw, qx, qy, qz, x, y, z);
                 cv::Mat img = cv::imread(path + imagePath, cv::IMREAD_GRAYSCALE);
                 imgs.push_back(img);
-                Ts.push_back(T_world_curr);
+                Twcs.push_back(Twc);
             }
         }
         file.close();
@@ -86,13 +86,13 @@ int main(int argc, char **argv)
     bool has_result;
     std::vector<Eigen::Vector4f> pc;
     for(int i = 1; i < imgs.size(); i++) {
-        has_result = depthmap_->add_frames(imgs[i], Ts[i].inv());
+        has_result = depthmap_->add_frames(imgs[i], Twcs[i].inv());
         if(!has_result) continue;
         {
             std::lock_guard<std::mutex> lock(depthmap_->getRefImgMutex());
 
-            const cv::Mat depth = depthmap_->getDepthmap();
-            // const cv::Mat depth = depthmap_->getDebugmap();
+            // const cv::Mat depth = depthmap_->getDepthmap();
+            const cv::Mat depth = depthmap_->getDebugmap();
 
             const cv::Mat ref_img = depthmap_->getReferenceImage();
             const quadmap::SE3<float> T_world_ref = depthmap_->getT_world_ref();
@@ -106,12 +106,12 @@ int main(int argc, char **argv)
             for (int y = 0; y < depth.rows; ++y) {
                 for (int x = 0; x < depth.cols; ++x) {
                     float depth_value = depth.at<float>(y, x);
-                    if (depth_value < 0.1) continue;
-                    const float3 f = normalize(make_float3((x - cx) / fx, (y - cy) / fy, 1.0f));
+                    if (depth_value < 0.1 || depth_value > 10.0) continue;
+                    const float3 f = make_float3((x - cx) / fx, (y - cy) / fy, 1.0f);
                     const float3 xyz = T_world_ref * (f * depth_value);
 
                     const uint8_t intensity = ref_img.at<uint8_t>(y, x);
-                    Eigen::Vector4f p(xyz.x, xyz.y, xyz.z, intensity);
+                    Eigen::Vector4f p(xyz.x / 100.0, depth_value, -y / 100.0, intensity);
                     pc.push_back(p);
                 }
             }
@@ -125,8 +125,8 @@ int main(int argc, char **argv)
     {
         std::lock_guard<std::mutex> lock(depthmap_->getRefImgMutex());
 
-        const cv::Mat depth = depthmap_->getDepthmap();
-        // const cv::Mat depth = depthmap_->getDebugmap();
+        // const cv::Mat depth = depthmap_->getDepthmap();
+        const cv::Mat depth = depthmap_->getDebugmap();
 
         const cv::Mat ref_img = depthmap_->getReferenceImage();
         const quadmap::SE3<float> T_world_ref = depthmap_->getT_world_ref();
@@ -140,9 +140,8 @@ int main(int argc, char **argv)
         for (int y = 0; y < depth.rows; ++y) {
             for (int x = 0; x < depth.cols; ++x) {
                 float depth_value = depth.at<float>(y, x);
-                if (depth_value < 0.1)
-                    continue;
-                const float3 f = normalize(make_float3((x - cx) / fx, (y - cy) / fy, 1.0f));
+                if (depth_value < 0.1 || depth_value > 10.0) continue;
+                const float3 f = make_float3((x - cx) / fx, (y - cy) / fy, 1.0f);
                 const float3 xyz = T_world_ref * (f * depth_value);
 
                 const uint8_t intensity = ref_img.at<uint8_t>(y, x);
