@@ -2,10 +2,12 @@ SET(PROJECT_NAME open_quadtree_mapping)
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.3)
 PROJECT(${PROJECT_NAME})
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${PROJECT_SOURCE_DIR}/CMakeModules/")
+if (NOT CMAKE_BUILD_TYPE)
 SET(CMAKE_BUILD_TYPE Release) # Release, RelWithDebInfo
+endif()
 
 find_package(CUDA REQUIRED)
-SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-O3 -use_fast_math)
+SET(CUDA_NVCC_FLAGS ${CUDA_NVCC_FLAGS};-O3 -use_fast_math -D__CUDACC__)
 
 # Specify compute capability
 list(APPEND CUDA_NVCC_FLAGS -arch=sm_61)
