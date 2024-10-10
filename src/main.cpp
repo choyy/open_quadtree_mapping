@@ -2,6 +2,7 @@
 
 #include <quadmap/depthmap.h>
 #include <quadmap/check_cuda_device.cuh>
+#include <string>
 
 void savePoints2File(const std::vector<Eigen::Vector4f>& pc, const std::string& filename)
 {
@@ -77,14 +78,16 @@ int main(int argc, char **argv)
     std::string imagePath;
     std::vector<quadmap::SE3<float>> Twcs;
     std::vector<cv::Mat> imgs;
+    std::vector<std::string> img_paths;
     if (file.is_open()) {
         while (std::getline(file, line)) {
             std::istringstream iss(line);
             double timestamp, x, y, z, qx, qy, qz, qw;
             if (iss >> timestamp >> x >> y >> z >> qx >> qy >> qz >> qw >> imagePath) {
                 quadmap::SE3<float> Twc(qw, qx, qy, qz, x, y, z);
-                cv::Mat img = cv::imread(path + imagePath, cv::IMREAD_GRAYSCALE);
-                imgs.push_back(img);
+                // cv::Mat img = cv::imread(path + imagePath, cv::IMREAD_COLOR);
+                // imgs.push_back(img);
+                img_paths.push_back(path + imagePath);
                 Twcs.push_back(Twc);
             }
         }
@@ -95,100 +98,28 @@ int main(int argc, char **argv)
 
     std::cout << "data loaded..." << std::endl;
     bool has_result;
-    std::vector<Eigen::Vector4f> pc;
-    std::vector<cv::Vec3b>       vc;
-    for(int i = 1; i < imgs.size(); i++) {
-        has_result = depthmap_->add_frames(imgs[i], Twcs[i].inv());
+    // for(int i = 1; i < imgs.size(); i++) {
+    for (int i = 1; i < img_paths.size(); i += 10) {
+    // for(int i = 1; i < 250; i++) {
+        cv::Mat img = cv::imread(img_paths[i], cv::IMREAD_COLOR);
+        has_result = depthmap_->add_frames(img, Twcs[i].inv());
         if (!has_result) {
             std::cout << "not initialized..." << std::endl;
             continue;
         }
-        {
-            std::lock_guard<std::mutex> lock(depthmap_->getRefImgMutex());
-
-            // const cv::Mat depth = depthmap_->getDepthmap();
-            const cv::Mat depth = depthmap_->getDebugmap();
-
-            const cv::Mat ref_img = depthmap_->getReferenceImage();
-            const quadmap::SE3<float> T_world_ref = depthmap_->getT_world_ref();
-
-            const float fx = depthmap_->getFx();
-            const float fy = depthmap_->getFy();
-            const float cx = depthmap_->getCx();
-            const float cy = depthmap_->getCy();
-            pc.clear();
-
-            for (int y = 0; y < depth.rows; ++y) {
-                for (int x = 0; x < depth.cols; ++x) {
-                    float depth_value = depth.at<float>(y, x);
-                    if (depth_value < 0.1 || depth_value > 10.0) continue;
-                    const float3 f = make_float3((x - cx) / fx, (y - cy) / fy, 1.0f);
-                    const float3 xyz = T_world_ref * (f * depth_value);
-
-                    const uint8_t intensity = ref_img.at<uint8_t>(y, x);
-                    Eigen::Vector4f p(xyz.x / 100.0, depth_value, -y / 100.0, intensity);
-                    pc.push_back(p);
-                }
-            }
-        }
-        std::cout << i << " number of points: " << pc.size() << std::endl;
+        // std::cout << i << std::endl;
+        std::cout << i << " number of points: " << depthmap_->getPtsFreq().size() << std::endl;
         // if (i % 200 == 0) {
         //     savePoints2File(pc, "points" + std::to_string(i) + ".txt");
         // }
     }
 
-    {
-        std::lock_guard<std::mutex> lock(depthmap_->getRefImgMutex());
-
-        // const cv::Mat depth = depthmap_->getDepthmap();
-        const cv::Mat depth = depthmap_->getDebugmap();
-
-        const cv::Mat ref_img = depthmap_->getReferenceImage();
-        const quadmap::SE3<float> T_world_ref = depthmap_->getT_world_ref();
-
-        const float fx = depthmap_->getFx();
-        const float fy = depthmap_->getFy();
-        const float cx = depthmap_->getCx();
-        const float cy = depthmap_->getCy();
-        pc.clear();
-
-        for (int y = 0; y < depth.rows; ++y) {
-            for (int x = 0; x < depth.cols; ++x) {
-                float depth_value = depth.at<float>(y, x);
-                if (depth_value < 0.1 || depth_value > 10.0) continue;
-                const float3 f = make_float3((x - cx) / fx, (y - cy) / fy, 1.0f);
-                const float3 xyz = T_world_ref * (f * depth_value);
-
-                const uint8_t intensity = ref_img.at<uint8_t>(y, x);
-                Eigen::Vector4f p(xyz.x, xyz.y, xyz.z, intensity);
-                pc.push_back(p);
-                vc.push_back(imgs[imgs.size() - 1].at<cv::Vec3b>(y, x));
-            }
-        }
-        savePoints2File(pc, "data/points.txt");
-        saveColors2File(vc, "data/colors.txt");
-
-        //  ///*for debug*/
-        // for(int y=0; y<depth.rows; ++y)
-        // {
-        //   for(int x=0; x<depth.cols; ++x)
-        //   {
-        //     float depth_value = depth.at<float>(y, x);
-        //     if(depth_value < 0.1)
-        //       continue;
-        //     const float3 f = make_float3((x-cx)/fx, (y-cy)/fy, 1.0f);
-        //     const float3 xyz = T_world_ref * ( f * depth_value );
-
-        //     PointType p;
-        //     p.x = x / 100.0;
-        //     p.y = depth_value;
-        //     p.z = - y / 100.0;
-        //     const uint8_t intensity = ref_img.at<uint8_t>(y, x);
-        //     p.intensity = intensity;
-        //     pc->push_back(p);
-        //   }
-        // }
+    std::ofstream outFile("data/pointsall.txt"); // 打开一个文件流用于写入
+    for (const auto& p : depthmap_->getPtsFreq()) {
+        outFile << p.x << " " << p.y << " " << p.z << std::endl;
     }
+    outFile.close(); // 关闭文件流
+    std::cout << "数据写入完成。" << std::endl;
 
     return 0;
 }
