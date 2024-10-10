@@ -36,7 +36,7 @@ quadmap::Depthmap::Depthmap(size_t width,
   seeds_.set_remap(remap_1, remap_2);
   seeds_.set_semi2dense_ratio(semi2dense_ratio);
 
-  printf("inremap_2itial the seed (%d x %d) fx: %f, fy: %f, cx: %f, cy: %f.\n", width, height, fx, fy, cx, cy);
+  printf("inremap_2itial the seed (%zu x %zu) fx: %f, fy: %f, cx: %f, cy: %f.\n", width, height, fx, fy, cx, cy);
 }
 
 bool quadmap::Depthmap::add_frames( const cv::Mat &img_curr,
@@ -57,11 +57,14 @@ bool quadmap::Depthmap::add_frames( const cv::Mat &img_curr,
     // const cv::Mat depth = depth_out;
     const cv::Mat depth = debug_out;
 
+    // 图像边缘提取
+    cv::Mat edges;
+    cv::Canny(img_gray, edges, 50, 40);
     // pts_.clear();
     for (int y = 0; y < depth.rows; ++y) {
       for (int x = 0; x < depth.cols; ++x) {
         float depth_value = depth.at<float>(y, x);
-        if (depth_value < 0.1 || depth_value > 10.0) { continue; }
+        if (depth_value < 0.1 || depth_value > 10.0 || edges.at<uchar>(y, x) == 0) { continue; }
         const float3 f   = make_float3((x - cx_) / fx_, (y - cy_) / fy_, 1.0f);
         const float3 xyz = T_world_ref * (f * depth_value);
 
@@ -87,7 +90,7 @@ std::vector<float3> quadmap::Depthmap::getPtsFreq(){
   std::lock_guard<std::mutex>  lock(update_mutex_);
   std::vector<float3> pts_freq;
   for (const auto& p : id_freq_map_) {
-      if (p.second > 40) {
+      if (p.second > 20) {
           pts_freq.emplace_back(id_pts_map_[p.first]);
       }
   }

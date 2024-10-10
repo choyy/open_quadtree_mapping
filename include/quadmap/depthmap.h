@@ -98,7 +98,7 @@ private:
               std::vector<float/*color*/>> points_;
 
   uint64_t              xyz2UniqeID(const float3& xyz) const; // 给每一个3d点创建一个唯一的id，3d点坐标范围有限制
-  const int             kRVoxel       = 100;
+  const int             kRVoxel       = 50;
   const int             kMoveBits     = 21;
   const float           kVoxelSize    = 1.F / kRVoxel;
   const int             kMinIntensity = 50;
