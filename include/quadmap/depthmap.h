@@ -101,7 +101,7 @@ private:
   const int             kRVoxel       = 100;
   const int             kMoveBits     = 21;
   const float           kVoxelSize    = 1.F / kRVoxel;
-  const int             kMinIntensity = 50;
+  const int             kMinIntensity = 10;
 
   std::vector<float3>          pts_;
   std::unordered_set<uint64_t> pts_ids_;

@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 
     // 打开文件
     std::string path = "../datasets/TUM/rgbd_dataset_freiburg2_xyz/";
-    std::ifstream file("data/photoslam_pose_img_rgbd_dataset_freiburg2.txt");
+    std::ifstream file("data/keyframe_pose_img_rgbd_dataset_freiburg2.txt");
     std::string line;
     std::string imagePath;
     std::vector<quadmap::SE3<float>> Twcs;
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
     std::cout << "data loaded..." << std::endl;
     bool has_result;
     // for(int i = 1; i < imgs.size(); i++) {
-    for (int i = 1; i < img_paths.size(); i += 10) {
+    for (int i = 1; i < img_paths.size(); i++) {
     // for(int i = 1; i < 250; i++) {
         cv::Mat img = cv::imread(img_paths[i], cv::IMREAD_COLOR);
         has_result = depthmap_->add_frames(img, Twcs[i].inv());
