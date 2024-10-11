@@ -94,12 +94,11 @@ int main(int argc, char** argv) {
     }
 
     std::cout << "data loaded..." << std::endl;
-    bool has_result;
     // for(int i = 1; i < imgs.size(); i++) {
     for (int i = 1; i < img_paths.size(); i += 10) {
         // for(int i = 1; i < 250; i++) {
         cv::Mat img = cv::imread(img_paths[i], cv::IMREAD_COLOR);
-        has_result  = depthmap_->add_frames(img, Twcs[i].inv());
+        bool has_result  = depthmap_->add_frames(img, Twcs[i].inv());
         if (!has_result) {
             std::cout << "not initialized..." << std::endl;
             continue;

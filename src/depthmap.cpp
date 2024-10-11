@@ -37,8 +37,7 @@ bool quadmap::Depthmap::add_frames(const cv::Mat&    img_curr,
     std::lock_guard<std::mutex> lock(update_mutex_);
     cv::Mat                     img_gray;
     cv::cvtColor(img_curr, img_gray, cv::COLOR_RGB2GRAY);
-    bool has_result = false;
-    has_result      = seeds_.input_raw(img_gray, T_curr_world);
+    bool has_result = seeds_.input_raw(img_gray, T_curr_world);
 
     if (has_result) {
         seeds_.get_result(depth_out, debug_out, reference_out);

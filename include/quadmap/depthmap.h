@@ -82,7 +82,7 @@ private:
 
     const int   kMoveBits = 21;                       // 3d点xyz坐标表示的位数
     uint64_t    xyz2UniqeID(const float3& xyz) const; // 给每一个3d点创建一个唯一的id，3d点坐标范围有限制
-    const int   kRVoxel       = 50;                   // 体素尺寸的倒数
+    const float kRVoxel       = 50;                   // 体素尺寸的倒数
     const float kVoxelSize    = 1.F / kRVoxel;        // 体素尺寸
     const int   kMinIntensity = 50;                   // quadtree map最小强度阈值
 
