@@ -31,6 +31,47 @@ quadmap::Depthmap::Depthmap(size_t  width,
 
     printf("inremap_2itial the seed (%zu x %zu) fx: %f, fy: %f, cx: %f, cy: %f.\n", width, height, fx, fy, cx, cy);
 }
+quadmap::Depthmap::Depthmap(const QParam& p, int semi2dense_ratio)
+  : width_(p.width)
+  , height_(p.height)
+  , seeds_(p.width, p.height, quadmap::PinholeCamera(p.fx, p.fy, p.cx, p.cy))
+  , fx_(p.fx)
+  , fy_(p.fy)
+  , cx_(p.cx)
+  , cy_(p.cy)
+{
+
+    float downsample_factor = 1;
+
+    // initial the remap mat, it is used for undistort and also resive the image
+    cv::Mat input_K = (cv::Mat_<float>(3, 3) << p.fx, 0.0f, p.cx, 0.0f, p.fy, p.cy, 0.0f, 0.0f, 1.0f);
+    cv::Mat input_D = (cv::Mat_<float>(1, 5) << p.k1, p.k2, p.p1, p.p2, p.k3);
+
+    float resize_fx, resize_fy, resize_cx, resize_cy;
+    resize_fx                = p.fx * downsample_factor;
+    resize_fy                = p.fy * downsample_factor;
+    resize_cx                = p.cx * downsample_factor;
+    resize_cy                = p.cy * downsample_factor;
+    cv::Mat resize_K         = (cv::Mat_<float>(3, 3) << resize_fx, 0.0F, resize_cx, 0.0F, resize_fy, resize_cy, 0.0F, 0.0F, 1.0F);
+    resize_K.at<float>(2, 2) = 1.0F;
+    int resize_width         = p.width * downsample_factor;
+    int resize_height        = p.height * downsample_factor;
+
+    cv::Mat undist_map1, undist_map2;
+    cv::initUndistortRectifyMap(
+        input_K,
+        input_D,
+        cv::Mat_<double>::eye(3, 3),
+        resize_K,
+        cv::Size(resize_width, resize_height),
+        CV_32FC1,
+        undist_map1, undist_map2);
+
+    seeds_.set_remap(undist_map1, undist_map2);
+    seeds_.set_semi2dense_ratio(semi2dense_ratio);
+
+    printf("[quadtree map]inremap_2itial the seed (%d x %d) fx: %f, fy: %f, cx: %f, cy: %f.\n", p.width, p.height, p.fx, p.fy, p.cx, p.cy);
+}
 
 bool quadmap::Depthmap::add_frames(const cv::Mat&    img_curr,
                                    const SE3<float>& T_curr_world) {

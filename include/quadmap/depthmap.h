@@ -28,6 +28,26 @@
 #include <quadmap/seed_matrix.cuh>
 namespace quadmap {
 
+class QParam{
+public:
+  explicit QParam(const std::string& cam_params_str){
+      cv::FileStorage fs(cam_params_str, cv::FileStorage::READ);
+      width  = fs["Camera.width"];
+      height = fs["Camera.height"];
+      fx     = fs["Camera1.fx"];
+      fy     = fs["Camera1.fy"];
+      cx     = fs["Camera1.cx"];
+      cy     = fs["Camera1.cy"];
+      k1     = fs["Camera1.k1"];
+      k2     = fs["Camera1.k2"];
+      p1     = fs["Camera1.p1"];
+      p2     = fs["Camera1.p2"];
+      k3     = fs["Camera1.k3"];
+  }
+  int width, height;
+  float fx, fy, cx, cy, k1, k2, p1, p2, k3;
+};
+
 class Depthmap {
 public:
     Depthmap(
@@ -40,6 +60,7 @@ public:
         cv::Mat remap_1,
         cv::Mat remap_2,
         int     semi2dense_ratio);
+    Depthmap(const QParam& p, int semi2dense_ratio = 1);
 
     bool add_frames(const cv::Mat&    img_curr,
                     const SE3<float>& T_curr_world);
@@ -90,4 +111,4 @@ private:
     std::unordered_map<uint64_t, float3>   id_pts_map_;  // 3d点id与3d点坐标的映射
 };
 
-} // namespace quadmap
+} // namespace quadmap // namespace quadmap
