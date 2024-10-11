@@ -86,7 +86,7 @@ bool quadmap::Depthmap::add_frames( const cv::Mat &img_curr,
 
   return has_result;
 }
-std::vector<float3> quadmap::Depthmap::getPtsFreq(){
+std::vector<float3> quadmap::Depthmap::getPtsFreq(){ // 获取频率大于阈值的3d点
   std::lock_guard<std::mutex>  lock(update_mutex_);
   std::vector<float3> pts_freq;
   for (const auto& p : id_freq_map_) {
@@ -95,11 +95,6 @@ std::vector<float3> quadmap::Depthmap::getPtsFreq(){
       }
   }
   return pts_freq;
-}
-
-void quadmap::Depthmap::updateCurrentImage(const cv::Mat &img_curr){
-  std::lock_guard<std::mutex>  lock(update_mutex_);
-  current_img = img_curr;
 }
 
 // 给定一个三维坐标，返回一个唯一的ID
@@ -112,36 +107,6 @@ uint64_t quadmap::Depthmap::xyz2UniqeID(const float3& xyz) const {
               | (static_cast<uint64_t>(xyz.z * kRVoxel + 0.5) & last21bit);
     return id;
 }
-
-std::tuple<std::vector<float/*pos*/>, std::vector<float/*color*/>>& quadmap::Depthmap::updatePoints(){
-  std::lock_guard<std::mutex>  lock(update_mutex_);
-  std::get<0>(points_).clear();
-  std::get<1>(points_).clear();
-
-  // const cv::Mat depth = pQuadtreeMap->getDepthmap();
-  const cv::Mat depth = debug_out;
-
-  for (int y = 0; y < depth.rows; ++y) {
-    for (int x = 0; x < depth.cols; ++x) {
-      float depth_value = depth.at<float>(y, x);
-      if (depth_value < 0.1 || depth_value > 10.0) continue;
-      const float3 f   = make_float3((x - cx_) / fx_, (y - cy_) / fy_, 1.0f);
-      const float3 xyz = T_world_ref * (f * depth_value);
-
-      const uint8_t intensity = reference_out.at<uint8_t>(y, x);
-      if( intensity < kMinIntensity) continue;
-      std::get<0>(points_).emplace_back(xyz.x);
-      std::get<0>(points_).emplace_back(xyz.y);
-      std::get<0>(points_).emplace_back(xyz.z);
-      auto c = current_img.at<cv::Vec3b>(y, x);
-      std::get<1>(points_).emplace_back(static_cast<float>(c[0]) / 255);
-      std::get<1>(points_).emplace_back(static_cast<float>(c[1]) / 255);
-      std::get<1>(points_).emplace_back(static_cast<float>(c[2]) / 255);
-    }
-  }
-  return points_;
-}
-
 
 const cv::Mat_<float> quadmap::Depthmap::getDepthmap() const
 {

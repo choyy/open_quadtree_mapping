@@ -18,9 +18,7 @@
 #pragma once
 
 #include <vector>
-#include <unordered_set>
 #include <unordered_map>
-#include <memory>
 #include <Eigen/Eigen>
 #include <opencv2/imgproc/imgproc.hpp>
 
@@ -47,8 +45,6 @@ public:
 
   bool add_frames(  const cv::Mat &img_curr,
                     const SE3<float> &T_curr_world);
-  void updateCurrentImage(const cv::Mat &img_curr);
-  std::tuple<std::vector<float/*pos*/>, std::vector<float/*color*/>>& updatePoints();
 
   const cv::Mat_<float> getDepthmap() const;
   const cv::Mat_<float> getDebugmap() const;
@@ -78,8 +74,7 @@ public:
   SE3<float> getT_world_ref() const
   { return T_world_ref; }
 
-  std::vector<float3>& getPts() { return pts_; }
-  std::vector<float3> getPtsFreq();
+  std::vector<float3> getPtsFreq(); // 获取频率大于阈值的3d点
 
 private:
   SeedMatrix seeds_;
@@ -94,19 +89,15 @@ private:
   cv::Mat reference_out;
   cv::Mat debug_out;
   cv::Mat current_img;
-  std::tuple<std::vector<float/*pos*/>,
-              std::vector<float/*color*/>> points_;
 
-  uint64_t              xyz2UniqeID(const float3& xyz) const; // 给每一个3d点创建一个唯一的id，3d点坐标范围有限制
-  const int             kRVoxel       = 50;
-  const int             kMoveBits     = 21;
-  const float           kVoxelSize    = 1.F / kRVoxel;
-  const int             kMinIntensity = 50;
+  const int   kMoveBits = 21;                       // 3d点xyz坐标表示的位数
+  uint64_t    xyz2UniqeID(const float3& xyz) const; // 给每一个3d点创建一个唯一的id，3d点坐标范围有限制
+  const int   kRVoxel       = 50;                   // 体素尺寸的倒数
+  const float kVoxelSize    = 1.F / kRVoxel;        // 体素尺寸
+  const int   kMinIntensity = 50;                   // quadtree map最小强度阈值
 
-  std::vector<float3>          pts_;
-  std::unordered_set<uint64_t> pts_ids_;
-  std::unordered_map<uint64_t, uint16_t> id_freq_map_;
-  std::unordered_map<uint64_t, float3>   id_pts_map_;
+  std::unordered_map<uint64_t, uint16_t> id_freq_map_; // 3d点id与频率的映射
+  std::unordered_map<uint64_t, float3>   id_pts_map_;  // 3d点id与3d点坐标的映射
 };
 
 }
