@@ -39,27 +39,27 @@ typedef unsigned short ushort;
 // host implementations of CUDA functions
 ////////////////////////////////////////////////////////////////////////////////
 
-inline float fminf(float a, float b)
+inline __device__ float fminf(float a, float b)
 {
     return a < b ? a : b;
 }
 
-inline float fmaxf(float a, float b)
+inline __device__ float fmaxf(float a, float b)
 {
     return a > b ? a : b;
 }
 
-inline int max(int a, int b)
+inline __device__ int max(int a, int b)
 {
     return a > b ? a : b;
 }
 
-inline int min(int a, int b)
+inline __device__ int min(int a, int b)
 {
     return a < b ? a : b;
 }
 
-inline float rsqrtf(float x)
+inline __device__ float rsqrtf(float x)
 {
     return 1.0f / sqrtf(x);
 }
@@ -1057,12 +1057,12 @@ inline __host__ __device__ float4 operator/(float b, float4 a)
 ////////////////////////////////////////////////////////////////////////////////
 // min
 ////////////////////////////////////////////////////////////////////////////////
-template<typename T>
-inline __device__
-T min(T a, T b)
-{
-  return a < b ? a : b;
-}
+// template<typename T>
+// inline __device__
+// T min(T a, T b)
+// {
+//   return a < b ? a : b;
+// }
 
 inline  __host__ __device__ float2 fminf(float2 a, float2 b)
 {
@@ -1106,12 +1106,12 @@ inline __host__ __device__ uint4 min(uint4 a, uint4 b)
 ////////////////////////////////////////////////////////////////////////////////
 // max
 ////////////////////////////////////////////////////////////////////////////////
-template<typename T>
-inline __device__
-T max(T a, T b)
-{
-  return a > b ? a : b;
-}
+// template<typename T>
+// inline __device__
+// T max(T a, T b)
+// {
+//   return a > b ? a : b;
+// }
 
 inline __host__ __device__ float2 fmaxf(float2 a, float2 b)
 {
