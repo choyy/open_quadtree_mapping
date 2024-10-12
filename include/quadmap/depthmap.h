@@ -19,6 +19,7 @@
 
 #include <mutex>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #include <Eigen/Eigen>
@@ -85,8 +86,13 @@ public:
 
     SE3<float> getT_world_ref() const { return T_world_ref; }
 
-    std::vector<float3>& getUnusedPts() { return unused_pts_; }; // 获取未使用的3d点
-    std::vector<float3>& getUnusedColors() { return unused_colors_; }; // 获取未使用的3d点颜色
+    std::pair<std::vector<float> /*points*/,
+              std::vector<float> /*colors*/>&
+    getUnusedPts() { return pts_colors_; }; // 获取未使用的3d点
+    void clearUnusedPts() {
+        pts_colors_.first.clear();
+        pts_colors_.second.clear();
+    }
 
 private:
     SeedMatrix seeds_;
@@ -108,10 +114,8 @@ private:
     const float kVoxelSize    = 1.F / kRVoxel;        // 体素尺寸
     const int   kMinIntensity = 50;                   // quadtree map最小强度阈值
 
-    std::unordered_map<uint64_t, uint16_t> id_freq_map_; // 3d点id与频率的映射
-    // std::unordered_map<uint64_t, float3>   id_pts_map_;  // 3d点id与3d点坐标的映射
-    std::vector<float3> unused_pts_; // 未使用的3d点
-    std::vector<float3> unused_colors_; // 未使用的3d点颜色
+    std::unordered_map<uint64_t, uint16_t>                                  id_freq_map_; // 3d点id与频率的映射
+    std::pair<std::vector<float> /*points*/, std::vector<float> /*colors*/> pts_colors_;
 };
 
 } // namespace quadmap

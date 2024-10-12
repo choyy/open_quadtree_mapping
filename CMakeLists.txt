@@ -39,9 +39,9 @@ cuda_add_library(open_quadtree_mapping SHARED
 target_link_libraries(open_quadtree_mapping
 ${OpenCV_LIBS} ${Boost_LIBRARIES})
 
-cuda_add_executable(open_quadtree_mapping_node
-    src/main.cpp
-    )
-target_link_libraries(open_quadtree_mapping_node
-open_quadtree_mapping
-)
+# cuda_add_executable(open_quadtree_mapping_node
+#     src/main.cpp
+#     )
+# target_link_libraries(open_quadtree_mapping_node
+# open_quadtree_mapping
+# )

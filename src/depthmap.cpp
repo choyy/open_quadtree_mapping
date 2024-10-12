@@ -104,9 +104,13 @@ bool quadmap::Depthmap::add_frames(const cv::Mat&    img_curr,
                 if (intensity < kMinIntensity) { continue; }
                 auto id = xyz2UniqeID(xyz);
                 if (id_freq_map_[id]++ == 10) {
-                    unused_pts_.emplace_back(xyz);
+                    std::get<0>(pts_colors_).emplace_back(xyz.x);
+                    std::get<0>(pts_colors_).emplace_back(xyz.y);
+                    std::get<0>(pts_colors_).emplace_back(xyz.z);
                     auto c = img_curr.at<cv::Vec3b>(y, x);
-                    unused_colors_.emplace_back(make_float3(c[0] / 255.F, c[1] / 255.F, c[2] / 255.F));
+                    std::get<1>(pts_colors_).emplace_back(c[0]/255.F);
+                    std::get<1>(pts_colors_).emplace_back(c[1]/255.F);
+                    std::get<1>(pts_colors_).emplace_back(c[2]/255.F);
                 };
             }
         }
@@ -125,8 +129,6 @@ uint64_t quadmap::Depthmap::xyz2UniqeID(const float3& xyz) const {
               | (static_cast<uint64_t>(xyz.z * kRVoxel + 0.5) & last21bit);
     return id;
 }
-
-
 
 const cv::Mat_<float> quadmap::Depthmap::getDepthmap() const {
     return depth_out;
