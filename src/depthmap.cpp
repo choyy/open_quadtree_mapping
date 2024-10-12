@@ -46,6 +46,7 @@ quadmap::Depthmap::Depthmap(const QParam& p, int semi2dense_ratio)
     // initial the remap mat, it is used for undistort and also resive the image
     cv::Mat input_K = (cv::Mat_<float>(3, 3) << p.fx, 0.0f, p.cx, 0.0f, p.fy, p.cy, 0.0f, 0.0f, 1.0f);
     cv::Mat input_D = (cv::Mat_<float>(1, 5) << p.k1, p.k2, p.p1, p.p2, p.k3);
+    // cv::Mat input_D = (cv::Mat_<float>(1, 5) << 0, 0, 0, 0, 0); // #todo: 不添加畸变系数点云效果看起来更好为什么?
 
     float resize_fx, resize_fy, resize_cx, resize_cy;
     resize_fx                = p.fx * downsample_factor;
@@ -120,7 +121,7 @@ std::vector<float3> quadmap::Depthmap::getPtsFreq() { // 获取频率大于阈�
     std::lock_guard<std::mutex> lock(update_mutex_);
     std::vector<float3>         pts_freq;
     for (const auto& p : id_freq_map_) {
-        if (p.second > 20) {
+        if (p.second > 10) {
             pts_freq.emplace_back(id_pts_map_[p.first]);
         }
     }
