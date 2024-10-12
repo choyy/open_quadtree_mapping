@@ -27,9 +27,9 @@ void saveColors2File(const std::vector<cv::Vec3b>& vc, const std::string& filena
 int main(int argc, char **argv)
 {
     Eigen::Matrix3f K;
-    K << 517.306408, 0, 318.643040,
-        0, 516.469215, 255.313989,
-        0, 0, 1;
+    K << 520.908620, 0, 325.141442,
+         0, 521.007327, 249.701764,
+         0, 0, 1;
     int cam_width = 640;
     int cam_height = 480;
     float cam_fx = K(0,0);
@@ -40,12 +40,11 @@ int main(int argc, char **argv)
     int semi2dense_ratio = 1;
     printf("read : width %d height %d\n", cam_width, cam_height);
 
-    float k1, k2, r1, r2;
-    k1 = k2 = r1 = r2 = 0.0;
+    float k1=0.231222, k2=-0.784899, p1=-0.003257, p2=-0.000105, k3=0.917205;
 
     // initial the remap mat, it is used for undistort and also resive the image
     cv::Mat input_K = (cv::Mat_<float>(3, 3) << cam_fx, 0.0f, cam_cx, 0.0f, cam_fy, cam_cy, 0.0f, 0.0f, 1.0f);
-    cv::Mat input_D = (cv::Mat_<float>(1, 4) << k1, k2, r1, r2);
+    cv::Mat input_D = (cv::Mat_<float>(1, 5) << k1, k2, p1, p2, k3);
 
     float resize_fx, resize_fy, resize_cx, resize_cy;
     resize_fx = cam_fx * downsample_factor;
@@ -72,7 +71,7 @@ int main(int argc, char **argv)
         undist_map1, undist_map2, semi2dense_ratio);
 
     // 打开文件
-    std::string path = "../datasets/TUM/rgbd_dataset_freiburg2_xyz/";
+    std::string path = "../../datasets/TUM/rgbd_dataset_freiburg2_xyz/";
     std::ifstream file("data/keyframe_pose_img_rgbd_dataset_freiburg2.txt");
     std::string line;
     std::string imagePath;
