@@ -23,53 +23,11 @@ void saveColors2File(const std::vector<cv::Vec3b>& vc, const std::string& filena
 }
 
 int main(int argc, char** argv) {
-    Eigen::Matrix3f K;
-    K << 517.306408, 0, 318.643040,
-        0, 516.469215, 255.313989,
-        0, 0, 1;
-    int    cam_width         = 640;
-    int    cam_height        = 480;
-    float  cam_fx            = K(0, 0);
-    float  cam_fy            = K(1, 1);
-    float  cam_cx            = K(0, 2);
-    float  cam_cy            = K(1, 2);
-    double downsample_factor = 1;
-    int    semi2dense_ratio  = 1;
-    printf("read : width %d height %d\n", cam_width, cam_height);
-
-    float k1, k2, r1, r2;
-    k1 = k2 = r1 = r2 = 0.0;
-
-    // initial the remap mat, it is used for undistort and also resive the image
-    cv::Mat input_K = (cv::Mat_<float>(3, 3) << cam_fx, 0.0f, cam_cx, 0.0f, cam_fy, cam_cy, 0.0f, 0.0f, 1.0f);
-    cv::Mat input_D = (cv::Mat_<float>(1, 4) << k1, k2, r1, r2);
-
-    float resize_fx, resize_fy, resize_cx, resize_cy;
-    resize_fx                = cam_fx * downsample_factor;
-    resize_fy                = cam_fy * downsample_factor;
-    resize_cx                = cam_cx * downsample_factor;
-    resize_cy                = cam_cy * downsample_factor;
-    cv::Mat resize_K         = (cv::Mat_<float>(3, 3) << resize_fx, 0.0f, resize_cx, 0.0f, resize_fy, resize_cy, 0.0f, 0.0f, 1.0f);
-    resize_K.at<float>(2, 2) = 1.0f;
-    int resize_width         = cam_width * downsample_factor;
-    int resize_height        = cam_height * downsample_factor;
-
-    cv::Mat undist_map1, undist_map2;
-    cv::initUndistortRectifyMap(
-        input_K,
-        input_D,
-        cv::Mat_<double>::eye(3, 3),
-        resize_K,
-        cv::Size(resize_width, resize_height),
-        CV_32FC1,
-        undist_map1, undist_map2);
-
-    auto depthmap_ = std::make_shared<quadmap::Depthmap>(
-        resize_width, resize_height, resize_fx, resize_cx, resize_fy, resize_cy,
-        undist_map1, undist_map2, semi2dense_ratio);
+    quadmap::QParam params("../cfg/ORB_SLAM3/Monocular/TUM/tum_freiburg2_xyz.yaml");
+    auto depthmap_ = std::make_shared<quadmap::Depthmap>(params);
 
     // 打开文件
-    std::string                      path = "../datasets/TUM/rgbd_dataset_freiburg2_xyz/";
+    std::string                      path = "../../datasets/TUM/rgbd_dataset_freiburg2_xyz/";
     std::ifstream                    file("data/debug_photoslam_pose_img_rgbd_dataset_freiburg2.txt");
     std::string                      line;
     std::string                      imagePath;
