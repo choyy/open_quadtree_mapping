@@ -29,24 +29,24 @@
 #include <quadmap/seed_matrix.cuh>
 namespace quadmap {
 
-class QParam{
+class QParam {
 public:
-  explicit QParam(const std::string& cam_params_str){
-      cv::FileStorage fs(cam_params_str, cv::FileStorage::READ);
-      width  = fs["Camera.width"];
-      height = fs["Camera.height"];
-      fx     = fs["Camera1.fx"];
-      fy     = fs["Camera1.fy"];
-      cx     = fs["Camera1.cx"];
-      cy     = fs["Camera1.cy"];
-      k1     = fs["Camera1.k1"];
-      k2     = fs["Camera1.k2"];
-      p1     = fs["Camera1.p1"];
-      p2     = fs["Camera1.p2"];
-      k3     = fs["Camera1.k3"];
-  }
-  int width, height;
-  float fx, fy, cx, cy, k1, k2, p1, p2, k3;
+    explicit QParam(const std::string& cam_params_str) {
+        cv::FileStorage fs(cam_params_str, cv::FileStorage::READ);
+        width  = fs["Camera.width"];
+        height = fs["Camera.height"];
+        fx     = fs["Camera1.fx"];
+        fy     = fs["Camera1.fy"];
+        cx     = fs["Camera1.cx"];
+        cy     = fs["Camera1.cy"];
+        k1     = fs["Camera1.k1"];
+        k2     = fs["Camera1.k2"];
+        p1     = fs["Camera1.p1"];
+        p2     = fs["Camera1.p2"];
+        k3     = fs["Camera1.k3"];
+    }
+    int   width, height;
+    float fx, fy, cx, cy, k1, k2, p1, p2, k3;
 };
 
 class Depthmap {
@@ -61,14 +61,14 @@ public:
         cv::Mat remap_1,
         cv::Mat remap_2,
         int     semi2dense_ratio);
-    Depthmap(const QParam& p, int semi2dense_ratio = 1);
+    explicit Depthmap(const QParam& p, int semi2dense_ratio = 1);
 
     bool add_frames(const cv::Mat&    img_curr,
                     const SE3<float>& T_curr_world);
 
-    const cv::Mat_<float> getDepthmap() const;
-    const cv::Mat_<float> getDebugmap() const;
-    const cv::Mat         getReferenceImage() const;
+    cv::Mat getDepthmap() const;
+    cv::Mat getDebugmap() const;
+    cv::Mat getReferenceImage() const;
 
     float getFx() const { return fx_; }
 
@@ -88,7 +88,7 @@ public:
 
     std::pair<std::vector<float> /*points*/,
               std::vector<float> /*colors*/>&
-    getUnusedPts() { return pts_colors_; }; // 获取未使用的3d点
+         getUnusedPts() { return pts_colors_; }; // 获取未使用的3d点
     void clearUnusedPts() {
         pts_colors_.first.clear();
         pts_colors_.second.clear();
@@ -108,11 +108,11 @@ private:
     cv::Mat    debug_out;
     cv::Mat    current_img;
 
-    const int   kMoveBits = 21;                       // 3d点xyz坐标表示的位数
-    uint64_t    xyz2UniqeID(const float3& xyz) const; // 给每一个3d点创建一个唯一的id，3d点坐标范围有限制
-    const float kRVoxel       = 50;                   // 体素尺寸的倒数
-    const float kVoxelSize    = 1.F / kRVoxel;        // 体素尺寸
-    const int   kMinIntensity = 50;                   // quadtree map最小强度阈值
+    const uint         kMoveBits = 21;                       // 3d点xyz坐标表示的位数
+    uint64_t           xyz2UniqeID(const float3& xyz) const; // 给每一个3d点创建一个唯一的id，3d点坐标范围有限制
+    const float        kRVoxel       = 50;                   // 体素尺寸的倒数
+    const float        kVoxelSize    = 1.F / kRVoxel;        // 体素尺寸
+    const int          kMinIntensity = 50;                   // quadtree map最小强度阈值
 
     std::unordered_map<uint64_t, uint16_t>                                  id_freq_map_; // 3d点id与频率的映射
     std::pair<std::vector<float> /*points*/, std::vector<float> /*colors*/> pts_colors_;
