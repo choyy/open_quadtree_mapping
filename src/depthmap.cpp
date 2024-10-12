@@ -87,7 +87,7 @@ std::vector<float3> quadmap::Depthmap::getPtsFreq(){
   std::lock_guard<std::mutex>  lock(update_mutex_);
   std::vector<float3> pts_freq;
   for (const auto& p : id_freq_map_) {
-      if (p.second > 5) {
+      if (p.second > 10) {
           pts_freq.emplace_back(id_pts_map_[p.first]);
       }
   }
