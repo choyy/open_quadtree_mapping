@@ -1,5 +1,8 @@
 #include <fstream>
 
+#include <opencv2/core/core_c.h>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/opencv.hpp>
 #include <quadmap/check_cuda_device.cuh>
 #include <quadmap/depthmap.h>
 #include <string>
@@ -56,20 +59,26 @@ int main(int argc, char** argv) {
     for (int i = 1; i < img_paths.size(); i += 1) {
         // for(int i = 1; i < 250; i++) {
         cv::Mat img = cv::imread(img_paths[i], cv::IMREAD_COLOR);
+        cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
         bool has_result  = depthmap_->add_frames(img, Twcs[i].inv());
         if (!has_result) {
             std::cout << "not initialized..." << std::endl;
             continue;
         }
         // std::cout << i << std::endl;
-        std::cout << i << " number of points: " << depthmap_->getPtsFreq().size() << std::endl;
+        std::cout << i << " number of points: " << depthmap_->getUnusedPts().size() << std::endl;
         // if (i % 200 == 0) {
         //     savePoints2File(pc, "points" + std::to_string(i) + ".txt");
         // }
     }
 
     std::ofstream outFile("data/pointsall.txt"); // 打开一个文件流用于写入
-    for (const auto& p : depthmap_->getPtsFreq()) {
+    for (const auto& p : depthmap_->getUnusedPts()) {
+        outFile << p.x << " " << p.y << " " << p.z << std::endl;
+    }
+    outFile.close(); // 关闭文件流
+    outFile.open("data/colorsall.txt"); // 打开一个文件流用于写入
+    for (const auto& p : depthmap_->getUnusedColors()) {
         outFile << p.x << " " << p.y << " " << p.z << std::endl;
     }
     outFile.close(); // 关闭文件流

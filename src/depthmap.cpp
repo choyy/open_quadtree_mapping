@@ -103,29 +103,16 @@ bool quadmap::Depthmap::add_frames(const cv::Mat&    img_curr,
                 const uint8_t intensity = reference_out.at<uint8_t>(y, x);
                 if (intensity < kMinIntensity) { continue; }
                 auto id = xyz2UniqeID(xyz);
-                id_freq_map_[id]++;
-                id_pts_map_[id] = xyz;
-                // auto ids_set_insertion = pts_ids_.emplace(id);
-                // if (ids_set_insertion.second) { // 3d点不存在，插入点云中
-                //   pts_.emplace_back(xyz);
-                //   // auto c = img_curr.at<cv::Vec3b>(y, x);
-                // }
-                // pts_.emplace_back(xyz);
+                if (id_freq_map_[id]++ == 10) {
+                    unused_pts_.emplace_back(xyz);
+                    auto c = img_curr.at<cv::Vec3b>(y, x);
+                    unused_colors_.emplace_back(make_float3(c[0] / 255.F, c[1] / 255.F, c[2] / 255.F));
+                };
             }
         }
     }
 
     return has_result;
-}
-std::vector<float3> quadmap::Depthmap::getPtsFreq() { // 获取频率大于阈值的3d点
-    std::lock_guard<std::mutex> lock(update_mutex_);
-    std::vector<float3>         pts_freq;
-    for (const auto& p : id_freq_map_) {
-        if (p.second > 10) {
-            pts_freq.emplace_back(id_pts_map_[p.first]);
-        }
-    }
-    return pts_freq;
 }
 
 // 给定一个三维坐标，返回一个唯一的ID
