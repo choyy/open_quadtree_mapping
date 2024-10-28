@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <opencv2/imgproc.hpp>
 #include <quadmap/depthmap.h>
 
 #include <utility>
@@ -87,21 +88,32 @@ bool quadmap::Depthmap::add_frames(const cv::Mat&    img_curr,
         // const cv::Mat depth = depth_out;
         const cv::Mat depth = debug_out;
 
-        // 图像边缘提取
-        cv::Mat edges;
-        cv::Canny(img_gray, edges, 50, 40);
+        // // 图像边缘提取
+        // cv::Mat edges;
+        // cv::Canny(img_gray, edges, 50, 40);
+
+        // 图像梯度计算
+        cv::Mat grad, grad_x, grad_y;
+        cv::Sobel(img_gray, grad_x, CV_16S, 1, 0, 3); // x方向梯度
+        cv::Sobel(img_gray, grad_y, CV_16S, 0, 1, 3); // y方向梯度
+        cv::convertScaleAbs(grad_x, grad_x);          // 转换为绝对值
+        cv::convertScaleAbs(grad_y, grad_y);
+        cv::addWeighted(grad_x, 0.5, grad_y, 0.5, 0, grad);                // 合并梯度（使用平方和的平方根）
+        double grad_threshold = 50.0;                                      // 阈值
+        cv::threshold(grad, grad, grad_threshold, 255, cv::THRESH_BINARY); // 选择大于阈值的像素
+
         // pts_.clear();
         for (int y = 0; y < depth.rows; ++y) {
             for (int x = 0; x < depth.cols; ++x) {
                 float depth_value = depth.at<float>(y, x);
-                if (depth_value < 0.1 || depth_value > 10.0 || edges.at<uchar>(y, x) == 0) { continue; }
+                if (depth_value < 0.1 || depth_value > 10.0 || grad.at<uchar>(y, x) == 0) { continue; }
                 const float3 f   = make_float3((x - cx_) / fx_, (y - cy_) / fy_, 1.0F); // NOLINT
                 const float3 xyz = T_world_ref * (f * depth_value);
 
                 const uint8_t intensity = reference_out.at<uint8_t>(y, x);
                 if (intensity < kMinIntensity) { continue; }
                 auto id = xyz2UniqeID(xyz);
-                if (id_freq_map_[id]++ == 10) {
+                if (id_freq_map_[id]++ == 15) {
                     std::get<0>(pts_colors_).emplace_back(xyz.x);
                     std::get<0>(pts_colors_).emplace_back(xyz.y);
                     std::get<0>(pts_colors_).emplace_back(xyz.z);

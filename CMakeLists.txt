@@ -41,7 +41,10 @@ ${OpenCV_LIBS} ${Boost_LIBRARIES})
 
 # cuda_add_executable(open_quadtree_mapping_node
 #     src/main.cpp
+#     src/check_cuda_device.cu
+#     src/seed_matrix.cu
+#     src/depthmap.cpp
 #     )
 # target_link_libraries(open_quadtree_mapping_node
-# open_quadtree_mapping
+# ${OpenCV_LIBS} ${Boost_LIBRARIES}
 # )

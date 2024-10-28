@@ -66,20 +66,21 @@ int main(int argc, char** argv) {
             continue;
         }
         // std::cout << i << std::endl;
-        std::cout << i << " number of points: " << depthmap_->getUnusedPts().size() << std::endl;
+        std::cout << i << " number of points: " << depthmap_->getUnusedPts().first.size() / 3 << std::endl;
         // if (i % 200 == 0) {
         //     savePoints2File(pc, "points" + std::to_string(i) + ".txt");
         // }
     }
 
     std::ofstream outFile("data/pointsall.txt"); // 打开一个文件流用于写入
-    for (const auto& p : depthmap_->getUnusedPts()) {
-        outFile << p.x << " " << p.y << " " << p.z << std::endl;
+    auto pts_colors = depthmap_->getUnusedPts();
+    for (size_t i = 0; i < pts_colors.first.size(); i += 3) {
+        outFile << pts_colors.first[i] << " " << pts_colors.first[i + 1] << " " << pts_colors.first[i + 2] << std::endl;
     }
     outFile.close(); // 关闭文件流
     outFile.open("data/colorsall.txt"); // 打开一个文件流用于写入
-    for (const auto& p : depthmap_->getUnusedColors()) {
-        outFile << p.x << " " << p.y << " " << p.z << std::endl;
+    for (size_t i = 0; i < pts_colors.first.size(); i += 3) {
+        outFile << pts_colors.second[i] << " " << pts_colors.second[i + 1] << " " << pts_colors.second[i + 2] << std::endl;
     }
     outFile.close(); // 关闭文件流
     std::cout << "数据写入完成。" << std::endl;
